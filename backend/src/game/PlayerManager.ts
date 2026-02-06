@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Player, ChatMessage } from './types';
+import { Player } from '../types';
 
 export class PlayerManager {
   private players: Map<string, Player> = new Map();
