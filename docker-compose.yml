@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gomoku-backend
+    ports:
+      - "8090:8090"
+    restart: always
+    networks:
+      - gomoku-network
+    environment:
+      - NODE_ENV=production
+      - PORT=8090
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gomoku-frontend
+    ports:
+      - "8091:80"
+    restart: always
+    networks:
+      - gomoku-network
+    depends_on:
+      - backend
+
+networks:
+  gomoku-network:
+    driver: bridge
