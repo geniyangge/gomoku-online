@@ -1,14 +1,20 @@
 @echo off
-echo 启动五子棋对战系统...
+echo Starting Gobang Server...
 echo.
 
-start cmd /k "cd backend && npm install && npm run dev"
+cd backend
+start cmd /k "npm install && npm run dev"
+cd ..
+
 timeout /t 3 /nobreak >nul
-start cmd /k "cd frontend && npm install && npm run dev"
+
+cd frontend
+start cmd /k "npm install && npm run dev"
+cd ..
 
 echo.
-echo 系统启动中...
-echo 后端服务: http://localhost:3001
-echo 前端访问: http://localhost:3000
+echo Servers started!
+echo Backend: http://localhost:8090
+echo Frontend: http://localhost:8091
 echo.
 pause
