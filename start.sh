@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo "启动五子棋对战系统..."
+echo "Starting Gobang Server..."
 echo ""
 
-# 启动后端
+# Start backend
 cd backend
 npm install
 npm run dev &
@@ -11,21 +11,20 @@ BACKEND_PID=$!
 
 cd ..
 
-# 等待后端启动
+# Wait for backend
 sleep 3
 
-# 启动前端
+# Start frontend
 cd frontend
 npm install
 npm run dev &
 FRONTEND_PID=$!
 
 echo ""
-echo "系统启动中..."
-echo "后端服务: http://localhost:3001"
-echo "前端访问: http://localhost:3000"
+echo "Servers started!"
+echo "Backend: http://localhost:8090"
+echo "Frontend: http://localhost:8091"
 echo ""
-echo "按 Ctrl+C 停止服务"
+echo "Press Ctrl+C to stop"
 
-# 等待用户输入
 wait
