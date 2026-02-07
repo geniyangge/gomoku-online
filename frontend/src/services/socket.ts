@@ -20,9 +20,11 @@ class SocketService {
   public drawRequest = ref<{ playerId: string; playerNickname: string } | null>(null)
 
   connect() {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8090'
+    // Docker环境下使用相对路径，让nginx代理WebSocket
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin
     this.socket = io(socketUrl, {
       transports: ['websocket'],
+      path: '/socket.io/'
     })
 
     this.socket.on('connect', () => {
