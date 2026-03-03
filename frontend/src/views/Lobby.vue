@@ -22,6 +22,9 @@
         class="room-table"
         :class="{ 'playing': room.status === 'playing' }"
         @click="joinRoom(room.id)"
+        @keydown.enter="joinRoom(room.id)"
+        tabindex="0"
+        role="button"
       >
         <div class="table-header">
           <span class="room-name">{{ room.name }}</span>
@@ -32,7 +35,15 @@
         
         <div class="table-seats">
           <div class="seat" :class="{ 'occupied': room.players[0] }">
-            <div class="seat-icon">黑</div>
+            <svg class="seat-icon" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="url(#black-gradient)" />
+              <defs>
+                <radialGradient id="black-gradient" cx="30%" cy="30%">
+                  <stop offset="0%" stop-color="#666" />
+                  <stop offset="100%" stop-color="#000" />
+                </radialGradient>
+              </defs>
+            </svg>
             <div class="seat-status">
               {{ room.players[0] ? '已入座' : '虚位以待' }}
             </div>
@@ -41,7 +52,15 @@
           <div class="vs">VS</div>
           
           <div class="seat" :class="{ 'occupied': room.players[1] }">
-            <div class="seat-icon white">白</div>
+            <svg class="seat-icon white" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="url(#white-gradient)" stroke="#999" stroke-width="1" />
+              <defs>
+                <radialGradient id="white-gradient" cx="30%" cy="30%">
+                  <stop offset="0%" stop-color="#fff" />
+                  <stop offset="100%" stop-color="#ddd" />
+                </radialGradient>
+              </defs>
+            </svg>
             <div class="seat-status">
               {{ room.players[1] ? '已入座' : '虚位以待' }}
             </div>
@@ -210,13 +229,24 @@ const formatTime = (timestamp: number) => {
 
 .search-box {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex: 1;
   max-width: 500px;
 }
 
 .search-box .input {
   flex: 1;
+  background: white;
+  border: 2px solid #e0e0e0;
+  color: #333;
+}
+
+.search-box .input::placeholder {
+  color: #999;
+}
+
+.search-box .input:focus {
+  border-color: #4CAF50;
 }
 
 .rooms-grid {
@@ -227,16 +257,24 @@ const formatTime = (timestamp: number) => {
 
 .room-table {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px solid transparent;
 }
 
 .room-table:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.room-table:focus-visible {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
 }
 
 .room-table.playing {
@@ -252,24 +290,25 @@ const formatTime = (timestamp: number) => {
 }
 
 .room-name {
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1.1rem;
+  color: #1a1a2e;
 }
 
 .room-status {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .room-status.idle {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
   color: white;
 }
 
 .room-status.playing {
-  background: #ff9800;
+  background: linear-gradient(135deg, #ff9800, #f57c00);
   color: white;
 }
 
@@ -284,37 +323,27 @@ const formatTime = (timestamp: number) => {
   flex: 1;
   text-align: center;
   padding: 1rem;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  border: 2px dashed rgba(0, 0, 0, 0.08);
 }
 
 .room-table.playing .seat {
   background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .seat.occupied {
-  background: rgba(76, 175, 80, 0.1);
+  background: rgba(76, 175, 80, 0.08);
+  border-style: solid;
+  border-color: rgba(76, 175, 80, 0.2);
 }
 
 .seat-icon {
   width: 50px;
   height: 50px;
-  background: #333;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  margin: 0 auto 0.5rem;
-  font-size: 1.2rem;
-}
-
-.seat-icon.white {
-  background: #fff;
-  color: #333;
-  border: 2px solid #333;
+  margin: 0 auto 0.75rem;
 }
 
 .seat-status {
@@ -323,13 +352,25 @@ const formatTime = (timestamp: number) => {
 }
 
 .room-table.playing .seat-status {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .vs {
-  font-weight: bold;
-  font-size: 1.2rem;
+  font-weight: 800;
+  font-size: 1.1rem;
   color: #999;
+  background: rgba(255, 255, 255, 0.9);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.room-table.playing .vs {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .spectators-count {
@@ -346,11 +387,12 @@ const formatTime = (timestamp: number) => {
 .no-rooms {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
   color: white;
   font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
 }
 
 .modal-overlay {
@@ -359,7 +401,8 @@ const formatTime = (timestamp: number) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -369,18 +412,32 @@ const formatTime = (timestamp: number) => {
 .modal {
   background: white;
   padding: 2rem;
-  border-radius: 16px;
+  border-radius: 24px;
   width: 90%;
   max-width: 400px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
 }
 
 .modal h3 {
   margin-bottom: 1rem;
+  color: #1a1a2e;
+  font-weight: 700;
 }
 
 .modal .input {
   width: 100%;
   margin-bottom: 1rem;
+  border: 2px solid #eee;
+  background: #f8f9fa;
+  color: #333;
+}
+
+.modal .input::placeholder {
+  color: #999;
+}
+
+.modal .input:focus {
+  border-color: #4CAF50;
 }
 
 .modal-actions {
@@ -391,21 +448,23 @@ const formatTime = (timestamp: number) => {
 
 .chat-section {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 1.5rem;
-  height: 300px;
+  height: 320px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .chat-header {
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f0f0f0;
 }
 
 .chat-header h3 {
-  color: #333;
+  color: #1a1a2e;
+  font-weight: 700;
 }
 
 .chat-messages {
@@ -426,13 +485,14 @@ const formatTime = (timestamp: number) => {
 }
 
 .chat-nickname {
-  font-weight: bold;
+  font-weight: 600;
   color: #4CAF50;
 }
 
 .chat-content {
   flex: 1;
   word-break: break-all;
+  color: #333;
 }
 
 .chat-time {
@@ -442,10 +502,146 @@ const formatTime = (timestamp: number) => {
 
 .chat-input {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  align-items: stretch;
 }
 
 .chat-input .input {
   flex: 1;
+  min-width: 0;
+  background: white;
+  border: 2px solid #e0e0e0;
+  color: #333;
+}
+
+.chat-input .input::placeholder {
+  color: #999;
+}
+
+.chat-input .input:focus {
+  border-color: #4CAF50;
+}
+
+@media (max-width: 768px) {
+  .lobby-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-box {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .search-box .input {
+    flex: 1 1 100%;
+  }
+  
+  .search-box .btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .rooms-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .room-table {
+    padding: 1rem;
+  }
+  
+  .table-seats {
+    gap: 0.5rem;
+  }
+  
+  .seat {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .seat-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .vs {
+    font-size: 0.9rem;
+    width: 32px;
+    height: 32px;
+  }
+  
+  .chat-section {
+    height: 280px;
+    padding: 1rem;
+  }
+  
+  .chat-header h3 {
+    font-size: 1rem;
+  }
+  
+  .chat-input {
+    flex-wrap: wrap;
+  }
+  
+  .chat-input .input {
+    flex: 1 1 100%;
+    order: 1;
+  }
+  
+  .chat-input .btn {
+    flex: 1;
+    order: 2;
+    margin-top: 0.5rem;
+  }
+  
+  .modal {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: 1rem;
+  }
+  
+  .lobby-container {
+    gap: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 1.2rem;
+  }
+  
+  .room-name {
+    font-size: 1rem;
+  }
+  
+  .room-status {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+  }
+  
+  .seat-status {
+    font-size: 0.75rem;
+  }
+  
+  .spectators-count {
+    font-size: 0.75rem;
+  }
+  
+  .no-rooms {
+    padding: 2rem 1rem;
+    font-size: 1rem;
+  }
 }
 </style>
