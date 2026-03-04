@@ -29,13 +29,16 @@ class SocketService {
       this.socket?.emit('session:init', savedSessionId)
     })
 
-    this.socket.on('session:established', ({ sessionId, isNew }) => {
-      localStorage.setItem('sessionId', sessionId)
-      console.log(isNew ? '新用户' : '老用户，状态已恢复')
+    this.socket.on(
+      'session:established',
+      ({ sessionId, isNew }: { sessionId: string; isNew: boolean }) => {
+        localStorage.setItem('sessionId', sessionId)
+        console.log(isNew ? '新用户' : '老用户，状态已恢复')
 
-      // 获取大厅聊天历史
-      this.socket?.emit('lobby:getChatHistory', 100)
-    })
+        // 获取大厅聊天历史
+        this.socket?.emit('lobby:getChatHistory', 100)
+      }
+    )
 
     this.socket.on('lobby:chatHistory', (messages: ChatMessage[]) => {
       this.lobbyMessages.value = messages
