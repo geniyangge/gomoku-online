@@ -8,13 +8,16 @@ import {
   InterServerEvents, 
   SocketData,
   ChatMessage,
-  Room
+  Room,
+  Player
 } from '../types';
+import { ChatMessage as ChatMessageModel } from '../database/ChatMessage';
 
 export class SocketHandler {
   private io: SocketServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
   private playerManager: PlayerManager;
   private roomManager: RoomManager;
+  private socketPlayerMap: Map<string, Player> = new Map();
 
   constructor(server: HttpServer) {
     this.io = new SocketServer(server, {
@@ -35,12 +38,66 @@ export class SocketHandler {
     this.io.on('connection', (socket) => {
       console.log(`用户连接: ${socket.id}`);
 
-      // 创建或恢复玩家
-      let player = this.playerManager.createPlayer(socket.id);
-      socket.emit('player:assigned', player);
+      socket.on('session:init', async (sessionId?: string) => {
+        const { player, sessionId: newSessionId, isNew } = await this.playerManager.createOrRestorePlayer(socket.id, sessionId);
+        this.socketPlayerMap.set(socket.id, player);
+        
+        socket.emit('session:established', { sessionId: newSessionId, isNew });
+        socket.emit('player:assigned', player);
 
-      // 发送房间列表
+        if (player.currentRoomId) {
+          const gameState = await this.playerManager.getPlayerGameState(player.id);
+          const room = this.roomManager.getRoom(player.currentRoomId);
+          if (room) {
+            const playerIndex = room.players.indexOf(player.id);
+            socket.join(room.id);
+            socket.emit('room:joined', { 
+              room, 
+              playerIndex: playerIndex !== -1 ? playerIndex : null,
+              restored: true,
+              gameState: gameState || undefined
+            });
+          }
+        }
+      });
+
       socket.emit('lobby:rooms', this.roomManager.getAllRooms());
+
+      // 获取大厅聊天历史
+      socket.on('lobby:getChatHistory', async (limit: number = 100) => {
+        const messages = await ChatMessageModel.find({ type: 'lobby' })
+          .sort({ timestamp: -1 })
+          .limit(limit)
+          .lean();
+        const chatMessages: ChatMessage[] = messages.map(m => ({
+          id: m._id.toString(),
+          playerId: m.playerId,
+          nickname: m.nickname,
+          content: m.content,
+          timestamp: m.timestamp,
+          type: m.type,
+          roomId: m.roomId
+        }));
+        socket.emit('lobby:chatHistory', chatMessages.reverse());
+      });
+
+      // 获取房间聊天历史
+      socket.on('room:getChatHistory', async (roomId: string, limit: number = 100) => {
+        const messages = await ChatMessageModel.find({ type: 'room', roomId })
+          .sort({ timestamp: -1 })
+          .limit(limit)
+          .lean();
+        const chatMessages: ChatMessage[] = messages.map(m => ({
+          id: m._id.toString(),
+          playerId: m.playerId,
+          nickname: m.nickname,
+          content: m.content,
+          timestamp: m.timestamp,
+          type: m.type,
+          roomId: m.roomId
+        }));
+        socket.emit('room:chatHistory', chatMessages.reverse());
+      });
 
       // 获取房间列表
       socket.on('lobby:getRooms', () => {
@@ -49,6 +106,9 @@ export class SocketHandler {
 
       // 创建房间
       socket.on('lobby:createRoom', (name: string) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.createRoom(name, player.id);
         this.io.emit('lobby:rooms', this.roomManager.getAllRooms());
         
@@ -58,6 +118,8 @@ export class SocketHandler {
 
       // 加入房间
       socket.on('lobby:joinRoom', (roomId: string) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
         this.joinRoom(socket, roomId);
       });
 
@@ -68,8 +130,9 @@ export class SocketHandler {
       });
 
       // 大厅聊天
-      socket.on('lobby:chat', (content: string) => {
-        if (!content.trim()) return;
+      socket.on('lobby:chat', async (content: string) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player || !content.trim()) return;
         
         const message: ChatMessage = {
           id: Date.now().toString(),
@@ -81,31 +144,34 @@ export class SocketHandler {
         };
 
         this.io.emit('lobby:chat', message);
+        
+        await ChatMessageModel.create(message);
       });
 
       // 离开房间
       socket.on('room:leave', () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
         this.leaveRoom(socket, player.id);
       });
 
       // 入座
       socket.on('room:sit', (seatIndex: number) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
         const result = this.roomManager.sitDown(room.id, player.id, seatIndex);
         if (result) {
           this.io.to(room.id).emit('room:updated', result.room);
-          
-          // 检查是否可以开始游戏
-          if (result.room.players[0] && result.room.players[1] && result.room.status === 'idle') {
-            // 可以开始游戏
-          }
         }
       });
 
       // 起立
       socket.on('room:stand', () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -116,8 +182,9 @@ export class SocketHandler {
       });
 
       // 房间内聊天
-      socket.on('room:chat', (content: string) => {
-        if (!content.trim()) return;
+      socket.on('room:chat', async (content: string) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player || !content.trim()) return;
 
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
@@ -134,14 +201,18 @@ export class SocketHandler {
 
         this.roomManager.addChatMessage(room.id, message);
         this.io.to(room.id).emit('room:chat', message);
+        
+        await ChatMessageModel.create(message);
       });
 
       // 开始游戏
-      socket.on('game:start', () => {
+      socket.on('game:start', async () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
-        // 检查是否是玩家
         const playerIndex = room.players.indexOf(player.id);
         if (playerIndex === -1) return;
 
@@ -149,11 +220,20 @@ export class SocketHandler {
         if (updatedRoom) {
           this.io.to(room.id).emit('game:started', { room: updatedRoom, firstPlayer: 0 });
           this.io.to(room.id).emit('room:updated', updatedRoom);
+
+          for (const pId of updatedRoom.players) {
+            if (pId) {
+              await this.playerManager.updateGameState(pId, 'playing', updatedRoom.players.indexOf(pId), room.id);
+            }
+          }
         }
       });
 
       // 落子
-      socket.on('game:move', (x: number, y: number) => {
+      socket.on('game:move', async (x: number, y: number) => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -164,9 +244,21 @@ export class SocketHandler {
           if (result.win) {
             this.io.to(room.id).emit('game:ended', { winner: player.id, reason: 'win' });
             this.io.to(room.id).emit('game:settlement', { winner: player.id, countdown: 10 });
+            
+            for (const pId of result.room.players) {
+              if (pId) {
+                await this.playerManager.updateGameState(pId, 'finished', result.room.players.indexOf(pId), room.id);
+              }
+            }
           } else if (result.draw) {
             this.io.to(room.id).emit('game:ended', { winner: null, reason: 'draw' });
             this.io.to(room.id).emit('game:settlement', { winner: null, countdown: 10 });
+            
+            for (const pId of result.room.players) {
+              if (pId) {
+                await this.playerManager.updateGameState(pId, 'finished', result.room.players.indexOf(pId), room.id);
+              }
+            }
           }
 
           this.io.to(room.id).emit('room:updated', result.room);
@@ -175,6 +267,9 @@ export class SocketHandler {
 
       // 请求和局
       socket.on('game:draw:request', () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -202,7 +297,10 @@ export class SocketHandler {
       });
 
       // 同意和局
-      socket.on('game:draw:accept', () => {
+      socket.on('game:draw:accept', async () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -211,11 +309,20 @@ export class SocketHandler {
           this.io.to(room.id).emit('game:ended', { winner: null, reason: 'draw' });
           this.io.to(room.id).emit('game:settlement', { winner: null, countdown: 10 });
           this.io.to(room.id).emit('room:updated', updatedRoom);
+
+          for (const pId of updatedRoom.players) {
+            if (pId) {
+              await this.playerManager.updateGameState(pId, 'finished', updatedRoom.players.indexOf(pId), room.id);
+            }
+          }
         }
       });
 
       // 拒绝和局
       socket.on('game:draw:reject', () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -238,7 +345,10 @@ export class SocketHandler {
       });
 
       // 投降
-      socket.on('game:surrender', () => {
+      socket.on('game:surrender', async () => {
+        const player = this.socketPlayerMap.get(socket.id);
+        if (!player) return;
+        
         const room = this.roomManager.getPlayerRoom(player.id);
         if (!room) return;
 
@@ -256,14 +366,24 @@ export class SocketHandler {
           this.io.to(room.id).emit('game:ended', { winner: opponentId, reason: 'win' });
           this.io.to(room.id).emit('game:settlement', { winner: opponentId, countdown: 10 });
           this.io.to(room.id).emit('room:updated', room);
+
+          for (const pId of room.players) {
+            if (pId) {
+              await this.playerManager.updateGameState(pId, 'finished', room.players.indexOf(pId), room.id);
+            }
+          }
         }
       });
 
       // 断开连接
       socket.on('disconnect', () => {
         console.log(`用户断开连接: ${socket.id}`);
-        this.leaveRoom(socket, player.id);
-        this.playerManager.removePlayer(player.id);
+        const player = this.socketPlayerMap.get(socket.id);
+        if (player) {
+          this.leaveRoom(socket, player.id);
+          this.playerManager.removePlayer(player.id);
+          this.socketPlayerMap.delete(socket.id);
+        }
       });
     });
   }
@@ -283,18 +403,22 @@ export class SocketHandler {
       const playerIndex = room.players.indexOf(player.id);
       socket.emit('room:joined', { room, playerIndex: playerIndex !== -1 ? playerIndex : null });
       socket.to(roomId).emit('room:updated', room);
+
+      this.playerManager.updateGameState(player.id, 'idle', playerIndex !== -1 ? playerIndex : null, roomId);
     }
   }
 
-  private leaveRoom(socket: Socket, playerId: string): void {
+  private async leaveRoom(socket: Socket, playerId: string): Promise<void> {
     const player = this.playerManager.getPlayer(playerId);
-    if (!player || !player.currentRoomId) return;
+    const socketPlayer = this.socketPlayerMap.get(socket.id);
+    if (!player || !socketPlayer?.currentRoomId) return;
 
-    const roomId = player.currentRoomId;
+    const roomId = socketPlayer.currentRoomId;
     const room = this.roomManager.leaveRoom(playerId);
     
     socket.leave(roomId);
     this.playerManager.updatePlayerRoom(playerId, null);
+    this.playerManager.clearGameState(playerId);
 
     if (room) {
       socket.to(roomId).emit('room:updated', room);
@@ -303,6 +427,13 @@ export class SocketHandler {
       if (room.status === 'finished' && room.winner) {
         this.io.to(roomId).emit('game:ended', { winner: room.winner, reason: 'escape' });
         this.io.to(roomId).emit('game:settlement', { winner: room.winner, countdown: 10 });
+
+        // 更新其他玩家的游戏状态
+        for (const pId of room.players) {
+          if (pId && pId !== playerId) {
+            await this.playerManager.updateGameState(pId, 'finished', room.players.indexOf(pId), roomId);
+          }
+        }
       }
     }
 
@@ -312,7 +443,7 @@ export class SocketHandler {
 
   // 定期检查结算时间
   private startSettlementCheck(): void {
-    setInterval(() => {
+    setInterval(async () => {
       const rooms = this.roomManager.getAllRooms();
       rooms.forEach(room => {
         if (room.status === 'finished' && room.settlementEndTime) {
@@ -320,6 +451,14 @@ export class SocketHandler {
             const resetRoom = this.roomManager.resetRoom(room.id);
             if (resetRoom) {
               this.io.to(room.id).emit('room:updated', resetRoom);
+              
+              // 重置后更新所有玩家的游戏状态
+              for (const pId of resetRoom.players) {
+                if (pId) {
+                  this.playerManager.updateGameState(pId, 'idle', resetRoom.players.indexOf(pId), null);
+                }
+              }
+              
               this.io.emit('lobby:rooms', this.roomManager.getAllRooms());
             }
           }

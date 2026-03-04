@@ -46,11 +46,14 @@ export interface Room {
 // WebSocket事件类型
 export interface ServerToClientEvents {
   'player:assigned': (player: Player) => void;
+  'session:established': (data: { sessionId: string; isNew: boolean }) => void;
   'lobby:rooms': (rooms: Room[]) => void;
   'lobby:chat': (message: ChatMessage) => void;
-  'room:joined': (data: { room: Room; playerIndex: number | null }) => void;
+  'lobby:chatHistory': (messages: ChatMessage[]) => void;
+  'room:joined': (data: { room: Room; playerIndex: number | null; restored?: boolean; gameState?: { status: GameStatus; playerIndex: number | null; roomId: string | null } }) => void;
   'room:updated': (room: Room) => void;
   'room:chat': (message: ChatMessage) => void;
+  'room:chatHistory': (messages: ChatMessage[]) => void;
   'game:started': (data: { room: Room; firstPlayer: number }) => void;
   'game:move': (data: { x: number; y: number; player: number }) => void;
   'game:ended': (data: { winner: string | null; reason: 'win' | 'draw' | 'escape' }) => void;
@@ -61,15 +64,18 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
+  'session:init': (sessionId?: string) => void;
   'lobby:getRooms': () => void;
   'lobby:createRoom': (name: string) => void;
   'lobby:joinRoom': (roomId: string) => void;
   'lobby:searchRoom': (keyword: string) => void;
   'lobby:chat': (content: string) => void;
+  'lobby:getChatHistory': (limit?: number) => void;
   'room:leave': () => void;
   'room:sit': (seatIndex: number) => void;
   'room:stand': () => void;
   'room:chat': (content: string) => void;
+  'room:getChatHistory': (roomId: string, limit?: number) => void;
   'game:start': () => void;
   'game:move': (x: number, y: number) => void;
   'game:draw:request': () => void;

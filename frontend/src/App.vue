@@ -74,9 +74,12 @@ body {
 }
 
 .main {
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
 }
 
 .btn {

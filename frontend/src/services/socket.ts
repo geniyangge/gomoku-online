@@ -29,6 +29,26 @@ class SocketService {
 
     this.socket.on('connect', () => {
       console.log('Connected to server')
+      
+      // 初始化 session，恢复用户状态
+      const savedSessionId = localStorage.getItem('sessionId')
+      this.socket?.emit('session:init', savedSessionId)
+    })
+
+    this.socket.on('session:established', ({ sessionId, isNew }) => {
+      localStorage.setItem('sessionId', sessionId)
+      console.log(isNew ? '新用户' : '老用户，状态已恢复')
+      
+      // 获取大厅聊天历史
+      this.socket?.emit('lobby:getChatHistory', 100)
+    })
+
+    this.socket.on('lobby:chatHistory', (messages: ChatMessage[]) => {
+      this.lobbyMessages.value = messages
+    })
+
+    this.socket.on('room:chatHistory', (messages: ChatMessage[]) => {
+      this.roomMessages.value = messages
     })
 
     this.socket.on('player:assigned', (player: Player) => {
@@ -47,10 +67,16 @@ class SocketService {
       }
     })
 
-    this.socket.on('room:joined', (data: { room: Room; playerIndex: number | null }) => {
+    this.socket.on('room:joined', (data: { room: Room; playerIndex: number | null; restored?: boolean; gameState?: any }) => {
       this.currentRoom.value = data.room
       this.playerIndex.value = data.playerIndex
-      this.roomMessages.value = data.room.chatMessages
+      
+      // 获取房间聊天历史
+      if (data.room && !data.restored) {
+        this.socket?.emit('room:getChatHistory', data.room.id, 100)
+      } else if (data.room.chatMessages) {
+        this.roomMessages.value = data.room.chatMessages
+      }
     })
 
     this.socket.on('room:updated', (room: Room) => {

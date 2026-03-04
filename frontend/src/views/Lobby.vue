@@ -216,10 +216,12 @@ const formatTime = (timestamp: number) => {
 .lobby-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  height: 100%;
+  gap: 1.5rem;
 }
 
 .lobby-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -253,6 +255,8 @@ const formatTime = (timestamp: number) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  max-height: 40%;
+  overflow-y: auto;
 }
 
 .room-table {
@@ -447,10 +451,11 @@ const formatTime = (timestamp: number) => {
 }
 
 .chat-section {
+  flex: 1;
+  min-height: 200px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 1.5rem;
-  height: 320px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
