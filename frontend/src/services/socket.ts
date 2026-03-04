@@ -21,7 +21,7 @@ class SocketService {
 
   connect() {
     // Docker环境下使用相对路径，让nginx代理WebSocket
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || window.location.origin
+    const socketUrl = window.location.origin
     this.socket = io(socketUrl, {
       transports: ['websocket'],
       path: '/socket.io/'
