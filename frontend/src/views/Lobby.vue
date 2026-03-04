@@ -2,9 +2,9 @@
   <div class="lobby-container">
     <div class="lobby-header">
       <div class="search-box">
-        <input 
-          v-model="searchKeyword" 
-          type="text" 
+        <input
+          v-model="searchKeyword"
+          type="text"
           placeholder="搜索房间号或名称..."
           class="input"
           @keyup.enter="searchRoom"
@@ -16,11 +16,11 @@
     </div>
 
     <div class="rooms-grid">
-      <div 
-        v-for="room in socketService.rooms.value" 
-        :key="room.id" 
+      <div
+        v-for="room in socketService.rooms.value"
+        :key="room.id"
         class="room-table"
-        :class="{ 'playing': room.status === 'playing' }"
+        :class="{ playing: room.status === 'playing' }"
         @click="joinRoom(room.id)"
         @keydown.enter="joinRoom(room.id)"
         tabindex="0"
@@ -32,9 +32,9 @@
             {{ room.status === 'idle' ? '空闲' : '游戏中' }}
           </span>
         </div>
-        
+
         <div class="table-seats">
-          <div class="seat" :class="{ 'occupied': room.players[0] }">
+          <div class="seat" :class="{ occupied: room.players[0] }">
             <svg class="seat-icon" viewBox="0 0 40 40">
               <circle cx="20" cy="20" r="16" fill="url(#black-gradient)" />
               <defs>
@@ -48,12 +48,19 @@
               {{ room.players[0] ? '已入座' : '虚位以待' }}
             </div>
           </div>
-          
+
           <div class="vs">VS</div>
-          
-          <div class="seat" :class="{ 'occupied': room.players[1] }">
+
+          <div class="seat" :class="{ occupied: room.players[1] }">
             <svg class="seat-icon white" viewBox="0 0 40 40">
-              <circle cx="20" cy="20" r="16" fill="url(#white-gradient)" stroke="#999" stroke-width="1" />
+              <circle
+                cx="20"
+                cy="20"
+                r="16"
+                fill="url(#white-gradient)"
+                stroke="#999"
+                stroke-width="1"
+              />
               <defs>
                 <radialGradient id="white-gradient" cx="30%" cy="30%">
                   <stop offset="0%" stop-color="#fff" />
@@ -81,9 +88,9 @@
     <div v-if="showCreateRoom" class="modal-overlay" @click.self="showCreateRoom = false">
       <div class="modal">
         <h3>创建房间</h3>
-        <input 
-          v-model="newRoomName" 
-          type="text" 
+        <input
+          v-model="newRoomName"
+          type="text"
           placeholder="请输入房间名称"
           class="input"
           @keyup.enter="createRoom"
@@ -101,20 +108,16 @@
         <h3>大厅聊天</h3>
       </div>
       <div class="chat-messages" ref="chatContainer">
-        <div 
-          v-for="msg in socketService.lobbyMessages.value" 
-          :key="msg.id"
-          class="chat-message"
-        >
+        <div v-for="msg in socketService.lobbyMessages.value" :key="msg.id" class="chat-message">
           <span class="chat-nickname">{{ msg.nickname }}:</span>
           <span class="chat-content">{{ msg.content }}</span>
           <span class="chat-time">{{ formatTime(msg.timestamp) }}</span>
         </div>
       </div>
       <div class="chat-input">
-        <input 
-          v-model="chatMessage" 
-          type="text" 
+        <input
+          v-model="chatMessage"
+          type="text"
           placeholder="输入消息..."
           class="input"
           @keyup.enter="sendChat"
@@ -154,7 +157,7 @@ const createRoom = () => {
   socketService.createRoom(newRoomName.value.trim())
   showCreateRoom.value = false
   newRoomName.value = ''
-  
+
   // 监听房间加入成功
   const unwatch = socketService.currentRoom
   const checkRoom = setInterval(() => {
@@ -163,13 +166,13 @@ const createRoom = () => {
       router.push(`/room/${socketService.currentRoom.value.id}`)
     }
   }, 100)
-  
+
   setTimeout(() => clearInterval(checkRoom), 5000)
 }
 
 const joinRoom = (roomId: string) => {
   socketService.joinRoom(roomId)
-  
+
   // 监听房间加入成功
   const checkRoom = setInterval(() => {
     if (socketService.currentRoom.value) {
@@ -177,7 +180,7 @@ const joinRoom = (roomId: string) => {
       router.push(`/room/${socketService.currentRoom.value.id}`)
     }
   }, 100)
-  
+
   setTimeout(() => clearInterval(checkRoom), 5000)
 }
 
@@ -198,7 +201,7 @@ const sendChat = () => {
   if (!chatMessage.value.trim()) return
   socketService.sendLobbyChat(chatMessage.value.trim())
   chatMessage.value = ''
-  
+
   nextTick(() => {
     if (chatContainer.value) {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight
@@ -248,7 +251,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .search-box .input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .rooms-grid {
@@ -277,7 +280,7 @@ const formatTime = (timestamp: number) => {
 
 .room-table:focus-visible {
   outline: none;
-  border-color: #4CAF50;
+  border-color: #4caf50;
   box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
 }
 
@@ -307,7 +310,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .room-status.idle {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, #4caf50, #45a049);
   color: white;
 }
 
@@ -441,7 +444,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .modal .input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .modal-actions {
@@ -491,7 +494,7 @@ const formatTime = (timestamp: number) => {
 
 .chat-nickname {
   font-weight: 600;
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .chat-content {
@@ -524,7 +527,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .chat-input .input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 @media (max-width: 768px) {
@@ -532,83 +535,83 @@ const formatTime = (timestamp: number) => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box {
     max-width: 100%;
     flex-wrap: wrap;
   }
-  
+
   .search-box .input {
     flex: 1 1 100%;
   }
-  
+
   .search-box .btn {
     flex: 1;
     min-width: 80px;
     padding: 0.75rem 0.5rem;
   }
-  
+
   .rooms-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .room-table {
     padding: 1rem;
   }
-  
+
   .table-seats {
     gap: 0.5rem;
   }
-  
+
   .seat {
     padding: 0.75rem 0.5rem;
   }
-  
+
   .seat-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   .vs {
     font-size: 0.9rem;
     width: 32px;
     height: 32px;
   }
-  
+
   .chat-section {
     height: 280px;
     padding: 1rem;
   }
-  
+
   .chat-header h3 {
     font-size: 1rem;
   }
-  
+
   .chat-input {
     flex-wrap: wrap;
   }
-  
+
   .chat-input .input {
     flex: 1 1 100%;
     order: 1;
   }
-  
+
   .chat-input .btn {
     flex: 1;
     order: 2;
     margin-top: 0.5rem;
   }
-  
+
   .modal {
     padding: 1.5rem;
     margin: 1rem;
   }
-  
+
   .modal-actions {
     flex-direction: column;
   }
-  
+
   .modal-actions .btn {
     width: 100%;
   }
@@ -618,32 +621,32 @@ const formatTime = (timestamp: number) => {
   .main {
     padding: 1rem;
   }
-  
+
   .lobby-container {
     gap: 1rem;
   }
-  
+
   .header h1 {
     font-size: 1.2rem;
   }
-  
+
   .room-name {
     font-size: 1rem;
   }
-  
+
   .room-status {
     font-size: 0.7rem;
     padding: 0.25rem 0.6rem;
   }
-  
+
   .seat-status {
     font-size: 0.75rem;
   }
-  
+
   .spectators-count {
     font-size: 0.75rem;
   }
-  
+
   .no-rooms {
     padding: 2rem 1rem;
     font-size: 1rem;

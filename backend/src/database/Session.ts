@@ -1,17 +1,17 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose'
 
 export interface ISession extends Document {
-  sessionId: string;
-  playerId: string;
-  nickname: string;
-  currentRoomId: string | null;
+  sessionId: string
+  playerId: string
+  nickname: string
+  currentRoomId: string | null
   gameState: {
-    status: 'idle' | 'playing' | 'finished';
-    playerIndex: number | null;
-    roomId: string | null;
-  };
-  createdAt: Date;
-  updatedAt: Date;
+    status: 'idle' | 'playing' | 'finished'
+    playerIndex: number | null
+    roomId: string | null
+  }
+  createdAt: Date
+  updatedAt: Date
 }
 
 const SessionSchema = new Schema<ISession>({
@@ -26,6 +26,6 @@ const SessionSchema = new Schema<ISession>({
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
+})
 
-export const Session = mongoose.model<ISession>('Session', SessionSchema);
+export const Session = mongoose.model<ISession>('Session', SessionSchema)

@@ -1,12 +1,6 @@
 import { ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
-import type { 
-  ServerToClientEvents, 
-  ClientToServerEvents, 
-  Player, 
-  Room, 
-  ChatMessage 
-} from '@/types'
+import type { ServerToClientEvents, ClientToServerEvents, Player, Room, ChatMessage } from '@/types'
 
 class SocketService {
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null
@@ -24,12 +18,12 @@ class SocketService {
     const socketUrl = window.location.origin
     this.socket = io(socketUrl, {
       transports: ['websocket'],
-      path: '/socket.io/'
+      path: '/socket.io/',
     })
 
     this.socket.on('connect', () => {
       console.log('Connected to server')
-      
+
       // 初始化 session，恢复用户状态
       const savedSessionId = localStorage.getItem('sessionId')
       this.socket?.emit('session:init', savedSessionId)
@@ -38,7 +32,7 @@ class SocketService {
     this.socket.on('session:established', ({ sessionId, isNew }) => {
       localStorage.setItem('sessionId', sessionId)
       console.log(isNew ? '新用户' : '老用户，状态已恢复')
-      
+
       // 获取大厅聊天历史
       this.socket?.emit('lobby:getChatHistory', 100)
     })
@@ -67,17 +61,20 @@ class SocketService {
       }
     })
 
-    this.socket.on('room:joined', (data: { room: Room; playerIndex: number | null; restored?: boolean; gameState?: any }) => {
-      this.currentRoom.value = data.room
-      this.playerIndex.value = data.playerIndex
-      
-      // 获取房间聊天历史
-      if (data.room && !data.restored) {
-        this.socket?.emit('room:getChatHistory', data.room.id, 100)
-      } else if (data.room.chatMessages) {
-        this.roomMessages.value = data.room.chatMessages
+    this.socket.on(
+      'room:joined',
+      (data: { room: Room; playerIndex: number | null; restored?: boolean; gameState?: any }) => {
+        this.currentRoom.value = data.room
+        this.playerIndex.value = data.playerIndex
+
+        // 获取房间聊天历史
+        if (data.room && !data.restored) {
+          this.socket?.emit('room:getChatHistory', data.room.id, 100)
+        } else if (data.room.chatMessages) {
+          this.roomMessages.value = data.room.chatMessages
+        }
       }
-    })
+    )
 
     this.socket.on('room:updated', (room: Room) => {
       this.currentRoom.value = room
@@ -108,9 +105,12 @@ class SocketService {
       // 棋盘更新会由 room:updated 事件处理，这里不需要额外操作
     })
 
-    this.socket.on('game:ended', (data: { winner: string | null; reason: 'win' | 'draw' | 'escape' }) => {
-      console.log('Game ended:', data)
-    })
+    this.socket.on(
+      'game:ended',
+      (data: { winner: string | null; reason: 'win' | 'draw' | 'escape' }) => {
+        console.log('Game ended:', data)
+      }
+    )
 
     this.socket.on('game:settlement', (data: { winner: string | null; countdown: number }) => {
       this.settlementData.value = data

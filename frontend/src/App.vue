@@ -29,7 +29,9 @@ onMounted(() => {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   min-height: 100vh;
 }
@@ -98,13 +100,13 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #5CB860 0%, #4CAF50 100%);
+  background: linear-gradient(135deg, #5cb860 0%, #4caf50 100%);
   box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
   transform: translateY(-2px);
 }
@@ -114,13 +116,13 @@ body {
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(135deg, #42A5F5 0%, #2196F3 100%);
+  background: linear-gradient(135deg, #42a5f5 0%, #2196f3 100%);
   box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
   transform: translateY(-2px);
 }
@@ -136,7 +138,7 @@ body {
 }
 
 .btn-danger:hover {
-  background: linear-gradient(135deg, #EF5350 0%, #f44336 100%);
+  background: linear-gradient(135deg, #ef5350 0%, #f44336 100%);
   box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
   transform: translateY(-2px);
 }
@@ -148,7 +150,7 @@ body {
 }
 
 .btn-warning:hover {
-  background: linear-gradient(135deg, #FFA726 0%, #ff9800 100%);
+  background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
   transform: translateY(-2px);
 }
@@ -176,7 +178,7 @@ body {
 }
 
 .input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   background: rgba(255, 255, 255, 0.12);
   box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
 }
@@ -187,26 +189,26 @@ body {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .header h1 {
     font-size: 1.2rem;
   }
-  
+
   .nickname {
     padding: 0.4rem 1rem;
     font-size: 0.8rem;
   }
-  
+
   .main {
     padding: 1rem;
   }
-  
+
   .btn {
     padding: 0.65rem 1.25rem;
     font-size: 0.9rem;
     min-height: 44px;
   }
-  
+
   .input {
     padding: 0.65rem 0.875rem;
     font-size: 0.9rem;
@@ -218,26 +220,26 @@ body {
   .header {
     padding: 0.5rem 0.75rem;
   }
-  
+
   .header h1 {
     font-size: 1rem;
   }
-  
+
   .nickname {
     padding: 0.35rem 0.75rem;
     font-size: 0.75rem;
   }
-  
+
   .main {
     padding: 0.75rem;
   }
-  
+
   .btn {
     padding: 0.6rem 1rem;
     font-size: 0.85rem;
     border-radius: 10px;
   }
-  
+
   .input {
     padding: 0.6rem 0.75rem;
     font-size: 0.85rem;

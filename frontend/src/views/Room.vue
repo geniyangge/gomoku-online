@@ -3,7 +3,7 @@
     <div class="room-layout">
       <!-- 左侧：玩家信息 -->
       <div class="players-panel">
-        <div class="player-card" :class="{ 'active': currentRoom?.currentPlayer === 0 }">
+        <div class="player-card" :class="{ active: currentRoom?.currentPlayer === 0 }">
           <svg class="player-avatar" viewBox="0 0 60 60">
             <circle cx="30" cy="30" r="26" fill="url(#room-black-gradient)" />
             <defs>
@@ -20,7 +20,11 @@
             </div>
             <div class="player-status">
               <template v-if="currentRoom?.players[0]">
-                {{ currentRoom?.status === 'playing' && currentRoom?.currentPlayer === 0 ? '思考中...' : '已准备' }}
+                {{
+                  currentRoom?.status === 'playing' && currentRoom?.currentPlayer === 0
+                    ? '思考中...'
+                    : '已准备'
+                }}
               </template>
               <template v-else>等待加入</template>
             </div>
@@ -31,15 +35,20 @@
           <span v-if="currentRoom?.status === 'playing'" class="turn-indicator">
             {{ currentRoom?.currentPlayer === 0 ? '黑子回合' : '白子回合' }}
           </span>
-          <span v-else-if="currentRoom?.status === 'finished'" class="game-over">
-            游戏结束
-          </span>
+          <span v-else-if="currentRoom?.status === 'finished'" class="game-over"> 游戏结束 </span>
           <span v-else>VS</span>
         </div>
 
-        <div class="player-card" :class="{ 'active': currentRoom?.currentPlayer === 1 }">
+        <div class="player-card" :class="{ active: currentRoom?.currentPlayer === 1 }">
           <svg class="player-avatar white" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="26" fill="url(#room-white-gradient)" stroke="#bbb" stroke-width="2" />
+            <circle
+              cx="30"
+              cy="30"
+              r="26"
+              fill="url(#room-white-gradient)"
+              stroke="#bbb"
+              stroke-width="2"
+            />
             <defs>
               <radialGradient id="room-white-gradient" cx="30%" cy="30%">
                 <stop offset="0%" stop-color="#fff" />
@@ -54,7 +63,11 @@
             </div>
             <div class="player-status">
               <template v-if="currentRoom?.players[1]">
-                {{ currentRoom?.status === 'playing' && currentRoom?.currentPlayer === 1 ? '思考中...' : '已准备' }}
+                {{
+                  currentRoom?.status === 'playing' && currentRoom?.currentPlayer === 1
+                    ? '思考中...'
+                    : '已准备'
+                }}
               </template>
               <template v-else>等待加入</template>
             </div>
@@ -65,7 +78,7 @@
       <!-- 中间：棋盘 -->
       <div class="game-panel">
         <div class="board-container">
-          <canvas 
+          <canvas
             ref="boardCanvas"
             :width="boardSize"
             :height="boardSize"
@@ -88,36 +101,16 @@
 
         <!-- 游戏控制按钮 -->
         <div class="game-controls">
-          <button 
-            v-if="canStartGame" 
-            class="btn btn-primary"
-            @click="startGame"
-          >
-            开始游戏
-          </button>
-          <button 
-            v-if="canRequestDraw" 
-            class="btn btn-warning"
-            @click="requestDraw"
-          >
+          <button v-if="canStartGame" class="btn btn-primary" @click="startGame">开始游戏</button>
+          <button v-if="canRequestDraw" class="btn btn-warning" @click="requestDraw">
             请求和局 ({{ remainingDrawCount }})
           </button>
-          <button 
-            v-if="canSurrender" 
-            class="btn btn-danger"
-            @click="surrender"
-          >
-            投降
-          </button>
-          <button 
-            v-if="isSpectator && hasEmptySeat" 
-            class="btn btn-secondary"
-            @click="sitDown"
-          >
+          <button v-if="canSurrender" class="btn btn-danger" @click="surrender">投降</button>
+          <button v-if="isSpectator && hasEmptySeat" class="btn btn-secondary" @click="sitDown">
             加入游戏
           </button>
-          <button 
-            v-if="isPlayer && currentRoom?.status === 'idle'" 
+          <button
+            v-if="isPlayer && currentRoom?.status === 'idle'"
             class="btn btn-secondary"
             @click="standUp"
           >
@@ -133,20 +126,16 @@
           <div class="chat-tab active">房间聊天</div>
         </div>
         <div class="chat-messages" ref="chatContainer">
-          <div 
-            v-for="msg in socketService.roomMessages.value" 
-            :key="msg.id"
-            class="chat-message"
-          >
+          <div v-for="msg in socketService.roomMessages.value" :key="msg.id" class="chat-message">
             <span class="chat-nickname">{{ msg.nickname }}:</span>
             <span class="chat-content">{{ msg.content }}</span>
             <span class="chat-time">{{ formatTime(msg.timestamp) }}</span>
           </div>
         </div>
         <div class="chat-input">
-          <input 
-            v-model="chatMessage" 
-            type="text" 
+          <input
+            v-model="chatMessage"
+            type="text"
             placeholder="输入消息..."
             class="input"
             @keyup.enter="sendChat"
@@ -223,15 +212,19 @@ const hasEmptySeat = computed(() => {
   return currentRoom.value?.players[0] === null || currentRoom.value?.players[1] === null
 })
 const canStartGame = computed(() => {
-  return isPlayer.value && 
-         currentRoom.value?.status === 'idle' && 
-         currentRoom.value?.players[0] && 
-         currentRoom.value?.players[1]
+  return (
+    isPlayer.value &&
+    currentRoom.value?.status === 'idle' &&
+    currentRoom.value?.players[0] &&
+    currentRoom.value?.players[1]
+  )
 })
 const canRequestDraw = computed(() => {
-  return isPlayer.value && 
-         currentRoom.value?.status === 'playing' &&
-         currentRoom.value?.currentPlayer === playerIndex.value
+  return (
+    isPlayer.value &&
+    currentRoom.value?.status === 'playing' &&
+    currentRoom.value?.currentPlayer === playerIndex.value
+  )
 })
 const canSurrender = computed(() => {
   return isPlayer.value && currentRoom.value?.status === 'playing'
@@ -249,13 +242,17 @@ onMounted(() => {
     const roomId = route.params.id as string
     socketService.joinRoom(roomId)
   }
-  
+
   drawBoard()
-  
+
   // 监听棋盘变化
-  watch(() => currentRoom.value?.board, () => {
-    drawBoard()
-  }, { deep: true })
+  watch(
+    () => currentRoom.value?.board,
+    () => {
+      drawBoard()
+    },
+    { deep: true }
+  )
 
   // 结算倒计时
   const countdownInterval = setInterval(() => {
@@ -310,7 +307,13 @@ const drawBoard = () => {
   }
 
   // 绘制星位
-  const stars = [[3, 3], [3, 11], [7, 7], [11, 3], [11, 11]]
+  const stars = [
+    [3, 3],
+    [3, 11],
+    [7, 7],
+    [11, 3],
+    [11, 11],
+  ]
   ctx.fillStyle = '#666'
   const starRadius = Math.max(2, cellSize * 0.1)
   stars.forEach(([x, y]) => {
@@ -326,7 +329,7 @@ const drawBoard = () => {
         if (cell !== -1) {
           const centerX = padding + x * cellSize
           const centerY = padding + y * cellSize
-          
+
           // 棋子阴影
           ctx.beginPath()
           ctx.arc(centerX + 2, centerY + 2, pieceRadius, 0, Math.PI * 2)
@@ -337,10 +340,14 @@ const drawBoard = () => {
           ctx.beginPath()
           ctx.arc(centerX, centerY, pieceRadius, 0, Math.PI * 2)
           const gradient = ctx.createRadialGradient(
-            centerX - pieceRadius * 0.3, centerY - pieceRadius * 0.3, 0,
-            centerX, centerY, pieceRadius
+            centerX - pieceRadius * 0.3,
+            centerY - pieceRadius * 0.3,
+            0,
+            centerX,
+            centerY,
+            pieceRadius
           )
-          
+
           if (cell === 0) {
             gradient.addColorStop(0, '#666')
             gradient.addColorStop(1, '#000')
@@ -348,10 +355,10 @@ const drawBoard = () => {
             gradient.addColorStop(0, '#fff')
             gradient.addColorStop(1, '#ddd')
           }
-          
+
           ctx.fillStyle = gradient
           ctx.fill()
-          
+
           if (cell === 1) {
             ctx.strokeStyle = '#999'
             ctx.lineWidth = 1
@@ -372,7 +379,7 @@ const handleBoardClick = (e: MouseEvent) => {
   console.log('room status:', currentRoom.value?.status)
   console.log('currentPlayer:', currentRoom.value?.currentPlayer)
   console.log('playerIndex:', playerIndex.value)
-  
+
   if (!isPlayer.value) {
     console.log('Cannot move: not a player')
     return
@@ -402,7 +409,7 @@ const handleBoardClick = (e: MouseEvent) => {
   const boardY = Math.round((y - padding) / cellSize)
 
   console.log('Attempting to place at:', boardX, boardY)
-  
+
   if (boardX >= 0 && boardX < BOARD_SIZE && boardY >= 0 && boardY < BOARD_SIZE) {
     socketService.makeMove(boardX, boardY)
   }
@@ -468,7 +475,7 @@ const sendChat = () => {
   if (!chatMessage.value.trim()) return
   socketService.sendRoomChat(chatMessage.value.trim())
   chatMessage.value = ''
-  
+
   nextTick(() => {
     if (chatContainer.value) {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight
@@ -511,7 +518,7 @@ const formatTime = (timestamp: number) => {
 
 .player-card.active {
   box-shadow: 0 0 30px rgba(76, 175, 80, 0.4);
-  border: 2px solid #4CAF50;
+  border: 2px solid #4caf50;
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(255, 255, 255, 0.95));
 }
 
@@ -533,7 +540,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .tag {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, #4caf50, #45a049);
   color: white;
   padding: 0.2rem 0.5rem;
   border-radius: 8px;
@@ -555,7 +562,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .turn-indicator {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, #4caf50, #45a049);
   padding: 0.5rem 1.25rem;
   border-radius: 25px;
   font-size: 0.9rem;
@@ -623,7 +630,7 @@ const formatTime = (timestamp: number) => {
 
 .winner {
   font-size: 1.5rem;
-  color: #4CAF50;
+  color: #4caf50;
   margin-bottom: 1rem;
   font-weight: 700;
 }
@@ -671,8 +678,8 @@ const formatTime = (timestamp: number) => {
 }
 
 .chat-tab.active {
-  color: #4CAF50;
-  border-bottom-color: #4CAF50;
+  color: #4caf50;
+  border-bottom-color: #4caf50;
 }
 
 .chat-messages {
@@ -693,7 +700,7 @@ const formatTime = (timestamp: number) => {
 
 .chat-nickname {
   font-weight: 700;
-  color: #4CAF50;
+  color: #4caf50;
   font-size: 0.9rem;
 }
 
@@ -734,7 +741,7 @@ const formatTime = (timestamp: number) => {
 }
 
 .chat-input .input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .modal-overlay {
@@ -784,30 +791,30 @@ const formatTime = (timestamp: number) => {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .players-panel {
     flex-direction: row;
     justify-content: center;
     flex-wrap: wrap;
     gap: 0.75rem;
   }
-  
+
   .player-card {
     padding: 1rem;
     flex: 1;
     min-width: 140px;
     max-width: 200px;
   }
-  
+
   .player-avatar {
     width: 50px;
     height: 50px;
   }
-  
+
   .vs-divider {
     display: none;
   }
-  
+
   .chat-panel {
     height: 250px;
   }
@@ -817,68 +824,69 @@ const formatTime = (timestamp: number) => {
   .room-layout {
     gap: 0.75rem;
   }
-  
+
   .players-panel {
     order: -1;
   }
-  
+
   .player-card {
     min-width: 120px;
     padding: 0.75rem;
   }
-  
+
   .player-avatar {
     width: 40px;
     height: 40px;
     margin-bottom: 0.5rem;
   }
-  
+
   .player-name {
     font-size: 0.9rem;
   }
-  
+
   .player-status {
     font-size: 0.75rem;
   }
-  
+
   .tag {
     font-size: 0.65rem;
     padding: 0.1rem 0.3rem;
   }
-  
+
   .board-container {
     padding: 0.75rem;
     border-radius: 12px;
   }
-  
+
   .game-controls {
     gap: 0.5rem;
   }
-  
+
   .game-controls .btn {
     padding: 0.6rem 1rem;
     font-size: 0.85rem;
   }
-  
+
   .chat-panel {
     height: 200px;
     border-radius: 12px;
   }
-  
+
   .chat-tab {
     padding: 0.75rem 1rem;
     font-size: 0.9rem;
   }
-  
+
   .settlement-modal {
     padding: 1.5rem;
   }
-  
+
   .settlement-modal h2 {
     font-size: 1.5rem;
   }
-  
-  .winner, .draw {
+
+  .winner,
+  .draw {
     font-size: 1.2rem;
   }
 }
@@ -887,86 +895,87 @@ const formatTime = (timestamp: number) => {
   .room-container {
     min-height: auto;
   }
-  
+
   .players-panel {
     justify-content: space-around;
   }
-  
+
   .player-card {
     min-width: 100px;
     padding: 0.5rem;
   }
-  
+
   .player-avatar {
     width: 36px;
     height: 36px;
   }
-  
+
   .player-name {
     font-size: 0.8rem;
   }
-  
+
   .player-status {
     font-size: 0.7rem;
   }
-  
-  .turn-indicator, .game-over {
+
+  .turn-indicator,
+  .game-over {
     font-size: 0.75rem;
     padding: 0.4rem 0.75rem;
   }
-  
+
   .board-container {
     padding: 0.5rem;
     overflow-x: auto;
   }
-  
+
   .game-board {
     max-width: 100%;
     height: auto;
   }
-  
+
   .game-controls {
     gap: 0.4rem;
   }
-  
+
   .game-controls .btn {
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
     border-radius: 8px;
   }
-  
+
   .chat-panel {
     height: 180px;
     border-radius: 12px;
   }
-  
+
   .chat-messages {
     padding: 0.5rem;
     gap: 0.5rem;
   }
-  
+
   .chat-tab {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
   }
-  
+
   .chat-input {
     padding: 0.5rem;
   }
-  
+
   .modal {
     padding: 1.25rem;
     margin: 1rem;
   }
-  
+
   .modal h3 {
     font-size: 1.1rem;
   }
-  
+
   .modal-actions {
     flex-direction: column;
   }
-  
+
   .modal-actions .btn {
     width: 100%;
   }
