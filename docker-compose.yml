@@ -26,7 +26,7 @@ services:
     networks:
       - gomoku-network
     depends_on:
-      - backend
+      - gomoku-backend
 
 networks:
   gomoku-network:
